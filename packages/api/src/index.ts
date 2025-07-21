@@ -7,6 +7,8 @@ dotenv.config(); // This should be one of the first things in your application
 import express, { Request, Response } from 'express';
 // 'amqplib' is the library for connecting to RabbitMQ.
 import amqp from 'amqplib';
+// Import the Elasticsearch client
+import { Client } from '@elastic/elasticsearch';
 
 // --- 3. Set up our configuration from environment variables ---
 // Read the port from the .env file, with a default of 3000 if it's not found.
@@ -15,10 +17,21 @@ const PORT = process.env.PORT || 3000;
 const RABBITMQ_URL = process.env.RABBITMQ_URL;
 // The name of the queue we will send messages to.
 const QUEUE_NAME = process.env.QUEUE_NAME || 'log_queue';
+// Read the Elasticsearch URL from the .env file.
+const ELASTICSEARCH_URL = process.env.ELASTICSEARCH_URL;
 
 // --- 4. The Main Application ---
 const app = express(); // Create an instance of an Express application
 app.use(express.json()); // This is a "middleware". It automatically parses incoming JSON requests for us.
+
+// ---: 5. Elasticsearch Client Setup ---
+let esClient: Client;
+if (ELASTICSEARCH_URL) {
+  esClient = new Client({ node: ELASTICSEARCH_URL });
+} else {
+  console.error("Elasticsearch URL is not defined. Please check your .env file.");
+  process.exit(1);
+}
 
 // This variable will hold our connection to RabbitMQ. We declare it here so it can be accessed by all parts of our app.
 let channel: amqp.Channel | null = null;
@@ -72,7 +85,7 @@ async function connectToRabbitMQ() {
   }
 }
 
-// --- 5. Define our API Endpoints (The "Addresses" of our server) ---
+// --- 6. Define our API Endpoints (The "Addresses" of our server) ---
 
 /**
  * A simple "health check" endpoint.
@@ -119,8 +132,84 @@ app.post('/ingest', async (req: Request, res: Response) => {
   }
 });
 
+// --- NEW: 7. The Search Endpoint ---
+app.get('/search', async (req: Request, res: Response) => {
+  try {
+    const { q, service, level, startTime, endTime, requestId } = req.query;
 
-// --- 6. Start the Server ---
+    const mustClauses: any[] = [];
+
+    if (q && typeof q === 'string') {
+      mustClauses.push({
+        match: {
+          message: q,
+        },
+      });
+    }
+
+    if(requestId && typeof requestId === 'string') {
+      mustClauses.push({
+        match: {
+          'metadata.requestId': requestId, // Search on the main 'requestId' field
+        },
+      }); 
+    }
+
+    // --- FIX: Changed 'term' to 'match' for broader compatibility ---
+    if (service && typeof service === 'string') {
+      mustClauses.push({
+        match: { // Use 'match' instead of 'term'
+          service: service, // Search on the main 'service' field
+        },
+      });
+    }
+
+    // --- FIX: Changed 'term' to 'match' for broader compatibility ---
+    if (level && typeof level === 'string') {
+      mustClauses.push({
+        match: { // Use 'match' instead of 'term'
+          level: level, // Search on the main 'level' field
+        },
+      });
+    }
+    
+    if (startTime || endTime) {
+        mustClauses.push({
+            range: {
+                '@timestamp': {
+                    gte: startTime,
+                    lte: endTime,
+                }
+            }
+        });
+    }
+
+    const result = await esClient.search({
+      index: 'logs-*',
+      body: {
+        query: {
+          bool: {
+            must: mustClauses,
+          },
+        },
+        sort: [
+          { '@timestamp': { order: 'desc' } }
+        ],
+        size: 100
+      },
+    });
+
+    const logs = result.hits.hits.map(hit => hit._source);
+    res.status(200).json(logs);
+
+  } catch (error) {
+    console.error('Error searching logs:', error);
+    res.status(500).json({ error: 'Internal server error while searching logs.' });
+  }
+});
+
+
+// --- 8. Start the Server ---
 app.listen(PORT, () => {
   console.log(`Ingestion API server started and listening on http://localhost:${PORT}`);
   // After the server starts listening for web requests, we begin the process of connecting to RabbitMQ.
