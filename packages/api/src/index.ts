@@ -137,79 +137,55 @@ app.post('/ingest', async (req: Request, res: Response) => {
 // --- NEW: 7. The Search Endpoint ---
 app.get('/search', async (req: Request, res: Response) => {
   try {
-    const { q, service, level, startTime, endTime, requestId } = req.query;
+    // NEW: Get page and limit from query, with defaults
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 50; // Load 50 logs per page
+    const from = (page - 1) * limit;
 
+    const { q, service, level, requestId, startTime, endTime } = req.query;
     const mustClauses: any[] = [];
 
-    if (q && typeof q === 'string') {
-      mustClauses.push({
-        match: {
-          message: q,
-        },
-      });
-    }
-
-    if(requestId && typeof requestId === 'string') {
-      mustClauses.push({
-        match: {
-          'metadata.requestId': requestId, // Search on the main 'requestId' field
-        },
-      }); 
-    }
-
-    // --- FIX: Changed 'term' to 'match' for broader compatibility ---
-    if (service && typeof service === 'string') {
-      mustClauses.push({
-        match: { // Use 'match' instead of 'term'
-          service: service, // Search on the main 'service' field
-        },
-      });
-    }
-
-    // --- FIX: Changed 'term' to 'match' for broader compatibility ---
-    if (level && typeof level === 'string') {
-      mustClauses.push({
-        match: { // Use 'match' instead of 'term'
-          level: level, // Search on the main 'level' field
-        },
-      });
-    }
-    
-    if (startTime || endTime) {
-        mustClauses.push({
-            range: {
-                '@timestamp': {
-                    gte: startTime,
-                    lte: endTime,
-                }
-            }
-        });
-    }
+    // ... (all the if-clauses for filters remain the same)
+    if (q && typeof q === 'string') { mustClauses.push({ match: { message: q } }); }
+    if (service && typeof service === 'string') { mustClauses.push({ match: { service: service } }); }
+    if (level && typeof level === 'string') { mustClauses.push({ match: { level: level } }); }
+    if (requestId && typeof requestId === 'string') { mustClauses.push({ match: { 'metadata.requestId': requestId } }); }
+    if (startTime || endTime) { mustClauses.push({ range: { '@timestamp': { gte: startTime, lte: endTime } } }); }
 
     const result = await esClient.search({
       index: 'logs-*',
       body: {
+        // NEW: Add 'from' and 'size' for pagination
+        from: from,
+        size: limit,
         query: {
           bool: {
-            must: mustClauses,
+            must: mustClauses.length > 0 ? mustClauses : { match_all: {} },
           },
         },
         sort: [
           { '@timestamp': { order: 'desc' } }
         ],
-        size: 100
       },
     });
 
     const logs = result.hits.hits.map(hit => hit._source);
-    res.status(200).json(logs);
+    const totalLogs = typeof result.hits.total === 'number' ? result.hits.total : result.hits.total?.value || 0;
+    
+    // NEW: Return logs along with pagination metadata
+    res.status(200).json({
+      logs,
+      total: totalLogs,
+      page,
+      limit,
+      hasMore: from + logs.length < totalLogs,
+    });
 
   } catch (error) {
     console.error('Error searching logs:', error);
     res.status(500).json({ error: 'Internal server error while searching logs.' });
   }
 });
-
 
 // --- 8. Start the Server ---
 app.listen(PORT, () => {

@@ -24,7 +24,7 @@ function SearchForm({ searchParams, setSearchParams, handleSearch }) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-4" position="sticky" top="0">
       {/* Main text search bar */}
       <div className="relative">
         <label htmlFor="search-q" className="sr-only">Search</label>
