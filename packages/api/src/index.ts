@@ -1,3 +1,4 @@
+import cors from 'cors'; // Import the CORS library to handle Cross-Origin Resource Sharing
 // The 'dotenv' library loads variables from a .env file into process.env
 import * as dotenv from 'dotenv';
 dotenv.config(); // This should be one of the first things in your application
@@ -24,6 +25,7 @@ const ELASTICSEARCH_URL = process.env.ELASTICSEARCH_URL;
 const app = express(); // Create an instance of an Express application
 app.use(express.json()); // This is a "middleware". It automatically parses incoming JSON requests for us.
 
+app.use(cors()); // Enable CORS so our API can be accessed from different origins (like a web app)
 // ---: 5. Elasticsearch Client Setup ---
 let esClient: Client;
 if (ELASTICSEARCH_URL) {
