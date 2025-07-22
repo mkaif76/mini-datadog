@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import SearchForm from '../components/SearchForm';
 import TableComponent from '../components/TableComponent';
+// NEW: Import the refresh icon
+import { RefreshCw } from 'lucide-react';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
@@ -11,11 +13,9 @@ function Logs() {
     q: '', service: '', level: '', requestId: '', startTime: '', endTime: '',
   });
   
-  // NEW: State for pagination
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
   
-  // A ref to prevent the initial useEffect from running twice in StrictMode
   const initialLoad = useRef(true);
 
   const fetchLogs = useCallback(async (params, pageNum) => {
@@ -32,9 +32,8 @@ function Logs() {
       }
     }
     
-    // Add pagination params to the query
     activeParams.page = pageNum;
-    activeParams.limit = 50; // Load 50 logs per page
+    activeParams.limit = 50;
     
     const queryString = new URLSearchParams(activeParams).toString();
     
@@ -44,7 +43,6 @@ function Logs() {
       
       const data = await response.json();
       
-      // If it's the first page, replace the logs. Otherwise, append them.
       setLogs(prevLogs => pageNum === 1 ? data.logs : [...prevLogs, ...data.logs]);
       setHasMore(data.hasMore);
 
@@ -56,23 +54,19 @@ function Logs() {
     }
   }, []);
 
-  // Effect for the initial load
   useEffect(() => {
-    // This check prevents the double-fetch in development due to React.StrictMode
     if (initialLoad.current) {
         fetchLogs(searchParams, 1);
         initialLoad.current = false;
     }
   }, [fetchLogs, searchParams]);
 
-  // This function is triggered by a new search
   const handleSearch = (params) => {
     setSearchParams(params);
-    setPage(1); // Reset to page 1 for a new search
+    setPage(1);
     fetchLogs(params, 1);
   };
 
-  // This function is triggered by the infinite scroll
   const loadMoreLogs = () => {
     const nextPage = page + 1;
     setPage(nextPage);
@@ -81,7 +75,18 @@ function Logs() {
 
   return (
     <div>
-      <h2 className="text-2xl font-bold text-text-main mb-6">Log Explorer</h2>
+      {/* NEW: Added a flex container for the title and the refresh button */}
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold text-text-main">Log Explorer</h2>
+        <button
+          onClick={() => handleSearch(searchParams)}
+          disabled={isLoading}
+          className="flex items-center px-4 py-2 rounded-md text-text-secondary bg-secondary-dark hover:bg-border-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <RefreshCw size={16} className={`mr-2 ${isLoading && logs.length === 0 ? 'animate-spin' : ''}`} />
+          Refresh
+        </button>
+      </div>
       
       <div className="bg-secondary-dark p-6 rounded-xl shadow-md mb-8">
         <SearchForm 
