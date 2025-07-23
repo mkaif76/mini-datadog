@@ -77,7 +77,7 @@ function Logs() {
     <div>
       {/* NEW: Added a flex container for the title and the refresh button */}
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold text-black">Log Explorer</h2>
+        <h2 className="text-2xl font-bold text-cyan">Log Explorer</h2>
         <button
           onClick={() => handleSearch(searchParams)}
           disabled={isLoading}

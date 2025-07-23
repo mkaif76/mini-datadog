@@ -19,7 +19,7 @@ const services = ['payment-service', 'user-service', 'api-gateway',
   'monitoring-service', 'alerting-service', 'cdn-service', 'proxy-service', 'scheduler-service',
   'search-engine-service', 'content-delivery-service'
 ];
-const levels = ['info', 'warn', 'debug'];
+const levels = ['info', 'warn', 'debug', 'error'];
 const messages = [
   'User logged in successfully',
   'Payment processed for order #',

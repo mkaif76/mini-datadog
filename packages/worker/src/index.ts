@@ -5,6 +5,7 @@ dotenv.config();
 
 import amqp from 'amqplib';
 import { Client } from '@elastic/elasticsearch';
+import { setupILMPolicy } from './setupILMPolicy'; // Assuming you have a separate file for ILM setup
 
 // --- Configuration ---
 const RABBITMQ_URL = process.env.RABBITMQ_URL;
@@ -20,57 +21,6 @@ if (ELASTICSEARCH_URL) {
   process.exit(1);
 }
 
-// --- Function to set up ILM Policy and Index Template ---
-async function setupILMPolicy() {
-  const policyName = 'logs_deletion_policy';
-  const templateName = 'logs_template';
-
-  try {
-    console.log('[ILM] Checking for existing ILM policy...');
-    // 1. Create the Index Lifecycle Management (ILM) Policy
-    await esClient.ilm.putLifecycle({
-      name: policyName,
-      body: {
-        policy: {
-          phases: {
-            hot: {
-              min_age: '0ms',
-              actions: {
-                set_priority: {
-                  priority: 100,
-                }
-              },
-            },
-            delete: {
-              min_age: '30d', // Wait 30 days from index creation
-              actions: {
-                delete: {}, // Then, perform the delete action
-              },
-            },
-          },
-        },
-      },
-    });
-    console.log(`[ILM] Policy '${policyName}' created or updated successfully.`);
-
-    // 2. Create an Index Template
-    await esClient.indices.putTemplate({
-      name: templateName,
-      body: {
-        index_patterns: ['logs-*'],
-        settings: {
-          'index.lifecycle.name': policyName,
-        },
-      },
-    });
-    console.log(`[ILM] Index template '${templateName}' created or updated successfully.`);
-
-  } catch (error) {
-    console.error('[ILM] Error setting up ILM policy and template:', error);
-  }
-}
-
-
 /**
  * The main function that starts the worker.
  */
@@ -82,7 +32,13 @@ async function startWorker() {
     return;
   }
 
-  await setupILMPolicy();
+  // --- Function to set up ILM Policy and Index Template ---
+  try {
+    await setupILMPolicy(esClient);
+  } catch (error) {
+    console.error('Failed to set up ILM policy:', error);
+    return;
+  }
 
   try {
     const connection = await amqp.connect(RABBITMQ_URL);
