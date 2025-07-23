@@ -187,6 +187,60 @@ app.get('/search', async (req: Request, res: Response) => {
   }
 });
 
+// Add this new endpoint to your packages/api/src/index.ts file
+
+app.get('/metrics', async (req: Request, res: Response) => {
+  try {
+    // We can add a time filter later, e.g., ?range=24h
+    const timeRange = (req.query.range as string) || '24h';
+
+    const result = await esClient.search({
+      index: 'logs-*',
+      body: {
+        size: 0, // We don't need the actual log documents, just the calculations.
+        query: {
+          range: {
+            '@timestamp': {
+              gte: `now-${timeRange}`, // e.g., "now-24h"
+              lt: 'now',
+            },
+          },
+        },
+        // This is the aggregation section where we define our calculations
+        aggs: {
+          // Calculation 1: Group by log level
+          logs_by_level: {
+            terms: {
+              field: 'level', // Group by the exact level string
+            },
+          },
+          // Calculation 2: Group by service
+          logs_by_service: {
+            terms: {
+              field: 'service', // Group by the exact service string
+              size: 10, // Get the top 10 services
+            },
+          },
+          // Calculation 3: Group by time
+          logs_over_time: {
+            date_histogram: {
+              field: '@timestamp',
+              fixed_interval: '1h', // Create one bucket per hour
+              min_doc_count: 0, // Show hours even if they have 0 logs
+            },
+          },
+        },
+      },
+    });
+
+    res.status(200).json(result.aggregations);
+
+  } catch (error) {
+    console.error('Error fetching metrics:', error);
+    res.status(500).json({ error: 'Internal server error while fetching metrics.' });
+  }
+});
+
 // --- 8. Start the Server ---
 app.listen(PORT, () => {
   console.log(`Ingestion API server started and listening on http://localhost:${PORT}`);
