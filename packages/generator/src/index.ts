@@ -122,8 +122,8 @@ function startGenerator() {
   console.log('Log generator started. Press CTRL+C to stop.');
   console.log(`Sending logs to: ${INGESTION_API_URL}`);
 
-  // Set an interval to run the generateAndSendLog function every 2 seconds (2000 milliseconds)
-  setInterval(generateAndSendLog, 2000);
+  // Set an interval to run the generateAndSendLog function every 30 seconds (2000 milliseconds)
+  setInterval(generateAndSendLog, 30000);
 }
 
 startGenerator();
