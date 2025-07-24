@@ -32,7 +32,7 @@ export const getMetrics = async (req: Request, res: Response) => {
                 },
             },
         });
-        res.status(200).json(result.aggregations);
+        res.status(200).json(result.body.aggregations);
     } catch (error) {
         console.error('Error fetching metrics:', error);
         res.status(500).json({ error: 'Internal server error while fetching metrics.' });

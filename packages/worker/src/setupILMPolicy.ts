@@ -8,7 +8,7 @@ export const setupILMPolicy = async (esClient: Client) => {
     console.log('[ILM] Checking for existing ILM policy...');
     // 1. Create the Index Lifecycle Management (ILM) Policy
     await esClient.ilm.putLifecycle({
-      name: policyName,
+      policy: policyName,
       body: {
         policy: {
           phases: {

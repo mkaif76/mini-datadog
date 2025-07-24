@@ -53,10 +53,7 @@ async function startServer() {
     const rabbitMQChannel = await rabbitMQConnection.createChannel();
 
     const esClient = new ElasticsearchClient({
-      node: ELASTICSEARCH_URL,
-      tls: {
-      rejectUnauthorized: false,
-      },
+      node: ELASTICSEARCH_URL
     });
     await connectWithRetry(() => esClient.ping(), 'Elasticsearch');
 

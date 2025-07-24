@@ -42,8 +42,8 @@ export const searchLogs = async (req: Request, res: Response) => {
       },
     });
 
-    const logs = result.hits.hits.map(hit => hit._source);
-    const totalLogs = typeof result.hits.total === 'number' ? result.hits.total : result.hits.total?.value || 0;
+    const logs = result.body.hits.hits.map((hit: { _source: any; }) => hit._source);
+    const totalLogs = typeof result.body.hits.total === 'number' ? result.body.hits.total : result.body.hits.total?.value || 0;
     
     res.status(200).json({
       logs,
