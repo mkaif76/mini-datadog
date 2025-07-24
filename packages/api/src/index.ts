@@ -28,7 +28,9 @@ const connectWithRetry = async (connectFn: () => Promise<any>, serviceName: stri
       console.log(`Successfully connected to ${serviceName}.`);
       return connection; // Return the connection object on success
     } catch (error) {
+      const err = error as Error;
       console.error(`Failed to connect to ${serviceName}. Retrying in ${delay / 1000}s...`);
+      console.log(`Error details: ${err.message}`);
       if (i === maxRetries - 1) {
         throw new Error(`Could not connect to ${serviceName} after ${maxRetries} attempts.`);
       }
