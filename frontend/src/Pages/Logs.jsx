@@ -4,10 +4,7 @@ import TableComponent from '../components/TableComponent';
 // NEW: Import the refresh icon
 import { RefreshCw } from 'lucide-react';
 
-const API_BASE_URL =
-  import.meta.env.MODE === 'production'
-    ? 'https://mini-datadog.onrender.com'
-    : (import.meta.env.VITE_API_URL || 'http://localhost:3000');
+let API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 function Logs() {
   const [logs, setLogs] = useState([]);

@@ -3,7 +3,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, LineChart, Line, AreaChart, Area, CartesianGrid } from 'recharts';
 import { RefreshCw } from 'lucide-react';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+let API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 // Define a color palette for our charts
 const LEVEL_COLORS = {
