@@ -15,7 +15,12 @@ const ELASTICSEARCH_URL = process.env.ELASTICSEARCH_URL;
 // --- Elasticsearch Client Setup ---
 let esClient: Client;
 if (ELASTICSEARCH_URL) {
-  esClient = new Client({ node: ELASTICSEARCH_URL });
+  esClient = new Client({
+      node: ELASTICSEARCH_URL,
+      tls: {
+      rejectUnauthorized: false,
+      },
+    });
 } else {
   console.error("Elasticsearch URL is not defined. Please check your .env file.");
   process.exit(1);

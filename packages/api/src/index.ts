@@ -50,7 +50,12 @@ async function startServer() {
     const rabbitMQConnection = await connectWithRetry(() => amqp.connect(RABBITMQ_URL), 'RabbitMQ');
     const rabbitMQChannel = await rabbitMQConnection.createChannel();
 
-    const esClient = new ElasticsearchClient({ node: ELASTICSEARCH_URL });
+    const esClient = new ElasticsearchClient({
+      node: ELASTICSEARCH_URL,
+      tls: {
+      rejectUnauthorized: false,
+      },
+    });
     await connectWithRetry(() => esClient.ping(), 'Elasticsearch');
 
     // --- If connections are successful, THEN start the Express app ---
