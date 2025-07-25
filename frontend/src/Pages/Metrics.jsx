@@ -3,7 +3,10 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, LineChart, Line, AreaChart, Area, CartesianGrid } from 'recharts';
 import { RefreshCw } from 'lucide-react';
 
-let API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const API_BASE_URL =
+  import.meta.env.MODE === 'production'
+    ? 'https://mini-datadog.onrender.com'
+    : (import.meta.env.VITE_API_URL || 'http://localhost:3000');
 
 // Define a color palette for our charts
 const LEVEL_COLORS = {

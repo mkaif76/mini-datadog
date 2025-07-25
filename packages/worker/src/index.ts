@@ -5,8 +5,8 @@ dotenv.config();
 
 import amqp from 'amqplib';
 import { Client } from '@elastic/elasticsearch';
-import { setupILMPolicy } from './setupILMPolicy'; // Assuming you have a separate file for ILM setup
-
+import { setupILMPolicy } from './setupILMPolicy';
+import express from 'express';
 // --- Configuration ---
 const RABBITMQ_URL = process.env.RABBITMQ_URL;
 const QUEUE_NAME = process.env.QUEUE_NAME || 'log_queue';
@@ -86,5 +86,15 @@ async function startWorker() {
   }
 }
 
-// Start the application
-startWorker();
+const app = express();
+const PORT = process.env.PORT || 5000;
+// Dummy route to check if the worker is running
+app.get('/', (req, res) => {
+  res.send('Worker is running and listening for logs.');
+});
+
+app.listen(PORT, () => {
+  console.log(`Worker server is running on http://localhost:${PORT}`);
+  // Start the application
+  startWorker();
+});

@@ -7,7 +7,7 @@ dotenv.config();
 // --- 2. Import Libraries ---
 import axios from 'axios'; // For making HTTP requests
 import { randomUUID } from 'crypto'; // For generating unique IDs
-
+import express from 'express'; // For creating an Express app
 // --- 3. Configuration ---
 const INGESTION_API_URL = process.env.INGESTION_API_URL;
 
@@ -119,11 +119,21 @@ function startGenerator() {
     console.error('Cannot start generator: INGESTION_API_URL is not defined.');
     return;
   }
-  console.log('Log generator started. Press CTRL+C to stop.');
+  // console.log('Log generator started. Press CTRL+C to stop.');
   console.log(`Sending logs to: ${INGESTION_API_URL}`);
 
   // Set an interval to run the generateAndSendLog function every 30 seconds (2000 milliseconds)
-  setInterval(generateAndSendLog, 30000);
+  setInterval(generateAndSendLog, 10000);
 }
+
+const app = express();
+const PORT = process.env.PORT || 4000;
+app.get('/', (req, res) => {
+  res.send('Log Generator is running. Logs are being sent to the Ingestion API.');
+});
+
+app.listen(PORT, () => {
+  console.log(`Log Generator server is running on http://localhost:${PORT}`);
+});
 
 startGenerator();
