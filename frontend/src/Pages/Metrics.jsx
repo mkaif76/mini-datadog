@@ -1,28 +1,42 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from "react";
 // NEW: Import AreaChart and Area for the gradient effect
-import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, LineChart, Line, AreaChart, Area, CartesianGrid } from 'recharts';
-import { RefreshCw } from 'lucide-react';
+import {
+  PieChart,
+  Pie,
+  Cell,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  AreaChart,
+  Area,
+  CartesianGrid,
+} from "recharts";
+import { RefreshCw } from "lucide-react";
 
 const API_BASE_URL =
-  import.meta.env.MODE === 'production'
-    ? 'https://mini-datadog.onrender.com'
-    : (import.meta.env.VITE_API_URL || 'http://localhost:3000');
+  import.meta.env.MODE === "production"
+    ? "https://mini-datadog.onrender.com"
+    : import.meta.env.VITE_API_URL || "http://localhost:3000";
 
 // Define a color palette for our charts
 const LEVEL_COLORS = {
-  error: '#EF4444', // Red
-  warn: '#F59E0B',  // Amber
-  info: '#3B82F6',  // Blue
-  debug: '#10B981' // Emerald
+  error: "#EF4444", // Red
+  warn: "#F59E0B", // Amber
+  info: "#3B82F6", // Blue
+  debug: "#10B981", // Emerald
 };
 
 // A reusable component for our dashboard cards
 const ChartCard = ({ title, children }) => (
   <div className="bg-secondary-dark p-6 rounded-xl shadow-md">
     <h3 className="text-lg font-semibold text-text-main mb-4">{title}</h3>
-    <div style={{ width: '100%', height: 300 }}>
-      {children}
-    </div>
+    <div style={{ width: "100%", height: 300 }}>{children}</div>
   </div>
 );
 
@@ -38,24 +52,26 @@ function Metrics() {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       const data = await response.json();
-      
+
       const transformedData = {
-        logsByLevel: data.logs_by_level.buckets.map(bucket => ({
+        logsByLevel: data.logs_by_level.buckets.map((bucket) => ({
           name: bucket.key,
           value: bucket.doc_count,
-          color: LEVEL_COLORS[bucket.key] || '#6B7280'
+          color: LEVEL_COLORS[bucket.key] || "#6B7280",
         })),
-        logsByService: data.logs_by_service.buckets.map(bucket => ({
+        logsByService: data.logs_by_service.buckets.map((bucket) => ({
           name: bucket.key,
           count: bucket.doc_count,
         })),
-        logsOverTime: data.logs_over_time.buckets.map(bucket => ({
-          time: new Date(bucket.key).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        logsOverTime: data.logs_over_time.buckets.map((bucket) => ({
+          time: new Date(bucket.key).toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
           count: bucket.doc_count,
         })),
       };
       setMetricsData(transformedData);
-
     } catch (error) {
       console.error("Failed to fetch metrics:", error);
     } finally {
@@ -76,7 +92,11 @@ function Metrics() {
   }
 
   if (!metricsData) {
-    return <div className="text-center text-text-secondary">Failed to load metrics data.</div>;
+    return (
+      <div className="text-center text-text-secondary">
+        Failed to load metrics data.
+      </div>
+    );
   }
 
   return (
@@ -88,7 +108,10 @@ function Metrics() {
           disabled={isLoading}
           className="flex items-center px-4 py-2 rounded-md text-text-secondary bg-secondary-dark hover:bg-border-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          <RefreshCw size={16} className={`mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+          <RefreshCw
+            size={16}
+            className={`mr-2 ${isLoading ? "animate-spin" : ""}`}
+          />
           Refresh
         </button>
       </div>
@@ -98,24 +121,55 @@ function Metrics() {
         <ChartCard title="Logs by Level">
           <ResponsiveContainer>
             <PieChart>
-              <Pie data={metricsData.logsByLevel} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100} label>
+              <Pie
+                data={metricsData.logsByLevel}
+                dataKey="value"
+                nameKey="name"
+                cx="50%"
+                cy="50%"
+                outerRadius={100}
+                label
+              >
                 {metricsData.logsByLevel.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={entry.color} />
                 ))}
               </Pie>
-              <Tooltip contentStyle={{backgroundColor: '#1F2937', border: 'none', borderRadius: '0.5rem'}}/>
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: "#1F2937",
+                  border: "none",
+                  borderRadius: "0.5rem",
+                }}
+              />
               <Legend />
             </PieChart>
           </ResponsiveContainer>
         </ChartCard>
 
         {/* Top Services Bar Chart */}
-        <ChartCard title="Top 5 Services by Log Volume">
+        <ChartCard title="Top 10 Services by Log Volume">
           <ResponsiveContainer>
-            <BarChart data={metricsData.logsByService} layout="vertical" margin={{ top: 5, right: 20, left: 20, bottom: 5 }}>
+            <BarChart
+              data={metricsData.logsByService}
+              layout="vertical"
+              margin={{ top: 5, right: 20, left: 20, bottom: 5 }}
+            >
               <XAxis type="number" stroke="#9CA3AF" />
-              <YAxis type="category" dataKey="name" stroke="#9CA3AF" width={120} tick={{fontSize: 12}} />
-              <Tooltip cursor={{fill: 'rgba(139, 92, 246, 0.1)'}} contentStyle={{backgroundColor: '#1F2937', border: 'none', borderRadius: '0.5rem'}} />
+              <YAxis
+                type="category"
+                dataKey="name"
+                stroke="#9CA3AF"
+                width={120}
+                tick={{ fontSize: 12 }}
+              />
+              <Tooltip
+                cursor={{ fill: "rgba(139, 92, 246, 0.1)" }}
+                contentStyle={{
+                  backgroundColor: "#1F2937",
+                  border: "none",
+                  borderRadius: "0.5rem",
+                }}
+              />
               <Bar dataKey="count" fill="#8B5CF6" />
             </BarChart>
           </ResponsiveContainer>
@@ -130,20 +184,33 @@ function Metrics() {
                 {/* This defines the gradient fill */}
                 <defs>
                   <linearGradient id="colorCount" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#8B5CF6" stopOpacity={0.8}/>
-                    <stop offset="95%" stopColor="#8B5CF6" stopOpacity={0}/>
+                    <stop offset="5%" stopColor="#8B5CF6" stopOpacity={0.8} />
+                    <stop offset="95%" stopColor="#8B5CF6" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                
+
                 <XAxis dataKey="time" stroke="#9CA3AF" />
                 <YAxis stroke="#9CA3AF" />
                 {/* This adds the cool dashed grid */}
                 <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                <Tooltip contentStyle={{backgroundColor: '#1F2937', border: 'none', borderRadius: '0.5rem'}} />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "#1F2937",
+                    border: "none",
+                    borderRadius: "0.5rem",
+                  }}
+                />
                 <Legend />
-                
+
                 {/* The Area component draws the filled gradient */}
-                <Area type="monotone" dataKey="count" stroke="#8B5CF6" strokeWidth={2} fillOpacity={1} fill="url(#colorCount)" />
+                <Area
+                  type="monotone"
+                  dataKey="count"
+                  stroke="#8B5CF6"
+                  strokeWidth={2}
+                  fillOpacity={1}
+                  fill="url(#colorCount)"
+                />
               </AreaChart>
             </ResponsiveContainer>
           </ChartCard>
